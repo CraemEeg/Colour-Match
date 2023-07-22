@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>ColorMatch - The Professional's Breaktime Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
     @import url('https://fonts.googleapis.com/css2?family=Inconsolata&display=swap');
@@ -31,13 +32,55 @@ body {
   padding: 20px;
   border-radius: 15px;
   box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+  max-width: 600px; /* max-width set to avoid stretching on larger screens */
+}
+
+/* ... other existing styles ... */
+
+@media screen and (max-width: 600px) {
+  body {
+    flex-direction: column; /* change layout to vertical on small screens */
+    padding: 20px; /* reduce padding on small sxcreens */
+  }
+  
+  #gameContent, #scoreCard {
+    flex-basis: 100%; /* make the cards full-width on small screens */
+    margin: 10px 0; /* reduce margin on small screens */
+  }
+  
+  #colorSquare {
+    width: 80%; /* adjust colorSquare size for smaller screens */
+    height: auto; /* maintain aspect ratio */
+  }
+  
+  #smallColorSquare {
+    width: 60px; /* adjust smallColorSquare size for smaller screens */
+    height: 60px; /* adjust smallColorSquare size for smaller screens */
+  }
+  
+  h1, h2 {
+    font-size: 1.5em; /* reduce font size for smaller screens */
+  }
+  
+  button {
+    padding: 5px 10px; /* reduce button padding on small screens */
+    font-size: 12px; /* reduce button font size on small screens */
+  }
+  
+  table {
+    font-size: 12px; /* reduce table font size on small screens */
+  }
+  
+  #difficultyDisplay {
+    font-size: medium; /* reduce difficultyDisplay font size on small screens */
+  }
 }
     #colorSquare, #smallColorSquare {
       margin: 20px auto;
       border-radius: 10px;
     }
     #colorSquare {
-      width: 300px;
+      width: 95%;
       height: 300px;
       background-color: rgb(0, 0, 0);
     }
@@ -63,6 +106,22 @@ body {
       text-align: center;
       color: #333;
     }
+
+    #difficultyDisplay{
+      font-family: 'Inconsolata', monospace;
+      font-size: larger;
+      text-align: center;
+      margin:20px;
+      color: #333;
+    }
+
+    #button-container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+
     button {
       padding: 10px 20px;
       margin: 10px;
@@ -96,6 +155,8 @@ body {
   border: 2px solid green;
 }
 
+
+
   </style>
    <script src="https://cdn.jsdelivr.net/gh/Agezao/confetti-js@master/index.min.js"></script>
    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.3.2/dist/confetti.min.js"></script>
@@ -104,15 +165,20 @@ body {
 </head>
 <body> 
     <canvas id="confetti"></canvas>
-  <div id="gameContent">
-    <h1>ColorMatch</h1>
-    <h2>The Professional's Breaktime Game</h2>
-    <div id="colorSquare"></div>
-    <div id="smallColorSquare"></div>
-    <button onclick="changeColor()">Generate Color</button>
-    <button onclick="openColorPicker()">Pick Color</button>
-    <button onclick="revealAnswer()">Reveal Answer</button>
-  </div>
+  
+    <div id="gameContent">
+      <h1>ColorMatch</h1>
+      <h2>The Professional's Breaktime Game</h2>
+      <div id="colorSquare"></div>
+      <div id="smallColorSquare"></div>
+      <div id="button-container">
+        <button onclick="changeColor()">Generate Color</button>
+        <button id="colorPickerButton" onclick="openColorPicker()">Pick Color</button>
+        <button onclick="revealAnswer()">Reveal Answer</button>
+      </div>
+    </div>
+    
+
   <div id="scoreCard">
     <table>
       <thead>
@@ -144,64 +210,45 @@ body {
         </tr>
       </tfoot>
     </table>
-    <button onclick="setPlayers(1)">1 Player</button>
-    <button onclick="setPlayers(2)">2 Players</button>
-    <button onclick="setPlayers(3)">3 Players</button>
-    <button onclick="setPlayers(4)">4 Players</button>
+    <!-- Your existing table code here... -->
+
+    <div id="difficultyDisplay">Difficulty: Medium</div>
+
+
+<div id="durationButtons">
+  <button data-duration="0.03">Impossible</button>
+  <button data-duration="0.1">Ultra Hard</button>
+  <button data-duration="0.5">Hard</button>
+  <button data-duration="1">Medium</button>
+  <button data-duration="3">Easy</button>
+
+  
+</div>
 
   </div>
-  <script defer>
+  <script>
    var answerRGB = [0, 0, 0]; 
 var storedRGB = [0, 0, 0]; 
 var answerColor = "rgb(0, 0, 0)"; 
-
-
-var scores = [[]]; // An array of arrays to store the scores of all players
- // An array of arrays to store the scores of all players
+var scores = [[],[]]; // An array to store the scores of both players
 var currentPlayer = 0; // Start with player 1 (0 index)
-var rounds = []; // Current round for each player
-var playerCount = 2; // Default to two players
+var rounds = [1, 1]; // Current round for each player
 
-function setPlayers(number) {
-  playerCount = number;
-  // Clear the scores and rounds
-  scores = Array.from({length: number}, () => []);
-  rounds = new Array(number).fill(1);
-  // Clear the table
-  var table = document.querySelector("table tbody");
-  while (table.firstChild) {
-    table.removeChild(table.firstChild);
-  }
-  // Generate new table rows for rounds and columns for players
-  for (var i = 1; i <= 10; i++) {
-    var row = table.insertRow();
-    row.insertCell(0).innerHTML = "Round " + i;
-    for (var j = 1; j <= number; j++) {
-      var cell = row.insertCell(j);
-      cell.id = "score" + j + "-" + i; // To adjust for player index and round
-    }
-  }
-  // Adjust the table header
-  var header = document.querySelector("table thead tr");
-  while (header.children.length > 1) {
-    header.removeChild(header.lastChild);
-  }
-  for (var i = 1; i <= number; i++) {
-    var th = document.createElement('th');
-    th.textContent = "Player " + i;
-    header.appendChild(th);
-  }
-}
+// Define a default duration
+var colorDuration = 5; // This can be changed to whatever default value you want
 
+// Add an event listener for each duration button
+document.querySelectorAll("#durationButtons button").forEach(function(button) {
+  button.addEventListener("click", function() {
+    // Parse the duration as a float, which also conveniently handles "Infinity"
+    colorDuration = parseFloat(this.dataset.duration);
 
+    // Update the displayed difficulty level
+    var difficultyLevel = "Difficulty: " + button.textContent;
+    document.getElementById("difficultyDisplay").textContent = difficultyLevel;
+  });
+});
 
-
-function createCell(type, text) {
-  var td = document.createElement(type);
-  var textNode = document.createTextNode(text);
-  td.appendChild(textNode);
-  return td;
-}
 
 
 
@@ -240,18 +287,29 @@ function changeColor() {
   answerRGB = [red, green, blue];
   answerColor = "rgb(" + red + ", " + green + ", " + blue + ")";
   document.getElementById("colorSquare").style.backgroundColor = answerColor;
+
+  // disable color picker button until color disappears
+  document.getElementById("colorPickerButton").disabled = true;
+
   setTimeout(function() {
     document.getElementById("colorSquare").style.backgroundColor = "white";
-  }, 5000);
+    // enable color picker button once color disappears
+    document.getElementById("colorPickerButton").disabled = false;
+  }, colorDuration * 1000); // Convert to milliseconds
+
   gameState = 1; // Move to next state
 }
 
 function openColorPicker() {
-  if (gameState !== 1) return; // If not in correct state, don't proceed
+  
+  console.log('openColorPicker called');  // Debug line
 
   var colorPicker = document.createElement("input");
   colorPicker.type = "color";
   colorPicker.oninput = function() {
+
+    console.log('colorPicker input event fired');  // Debug line
+
     document.getElementById("smallColorSquare").style.backgroundColor = this.value;
     var red = parseInt(this.value.slice(1, 3), 16);
     var green = parseInt(this.value.slice(3, 5), 16);
@@ -262,40 +320,30 @@ function openColorPicker() {
   gameState = 2; // Move to next state
 }
 
+
 function highlightHighestScore() {
   // Loop through each round
   for (let i = 1; i <= 10; i++) {
-    let highScore = 0;
-    let highScoreElements = [];
-    // Loop through each player
-    for (let j = 0; j < playerCount; j++) {
-      let scoreEl = document.getElementById(`score${j+1}-${i}`);
-      let playerScore = Number(scoreEl.textContent.slice(0, -1));
+    let score1 = document.getElementById(`score1-${i}`);
+    let score2 = document.getElementById(`score2-${i}`);
+    let player1Score = Number(score1.textContent.slice(0, -1));
+    let player2Score = Number(score2.textContent.slice(0, -1));
 
-      // Remove previous highlight
-      scoreEl.classList.remove('highlighted');
+    // Remove previous highlights
+    score1.classList.remove('highlighted');
+    score2.classList.remove('highlighted');
 
-      // Compare scores and remember the highest
-      if (playerScore > highScore) {
-        highScore = playerScore;
-        highScoreElements = [scoreEl];
-      } else if (playerScore === highScore) {
-        highScoreElements.push(scoreEl);
-      }
+    // Compare scores and highlight the highest
+    if (player1Score > player2Score) {
+      score1.classList.add('highlighted');
+    } else if (player1Score < player2Score) {
+      score2.classList.add('highlighted');
     }
-    // Highlight the highest score(s)
-    highScoreElements.forEach(el => el.classList.add('highlighted'));
   }
 }
 
-
 function revealAnswer() {
   if (gameState !== 2) return; // If not in correct state, don't proceed
-
-  if (scores[currentPlayer] === undefined) {
-    alert("Please set the number of players first.");
-    return;
-  }
 
   document.getElementById("colorSquare").style.backgroundColor = answerColor;
   var score = calculateScore();
@@ -303,8 +351,7 @@ function revealAnswer() {
   document.getElementById(`score${currentPlayer+1}-${rounds[currentPlayer]}`).textContent = score.toFixed(2) + "%"; // convert score to string here
   document.getElementById(`average${currentPlayer+1}`).textContent = (scores[currentPlayer].reduce((a, b) => a + b) / scores[currentPlayer].length).toFixed(2) + "%"; // convert average to string here
   rounds[currentPlayer]++; // Move to next round for this player
-  currentPlayer = (currentPlayer + 1) % playerCount; // Switch player
-
+  currentPlayer = currentPlayer === 0 ? 1 : 0; // Switch player
   gameState = 0; // Reset to initial state
 
   // Call the function to highlight the highest score
